@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from .validation import page_number
 
 SCHEMA = 5
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 STAGES = ['待准备', '准备中', '沟通／投递中', '面试中', '已获 Offer', '已结束']
 KINDS = ['背调', '模拟面试', '真实面试复盘', '外部分析结果']
 FIELD_LABELS = dict(company='公司',title='岗位／资料标题',source='来源',url='来源链接',jd='JD 原文',salary='薪资原文',salary_min='薪资下限',salary_max='薪资上限',city='城市',region='区域',address='办公地点',direct='公共交通直达',commute='通勤分钟',commute_note='通勤说明',stage='整体阶段',end_reason='结束原因',note='备注',star='星标',archived='归档',tags='标签',jobs='关联岗位',platform='平台',communicated='发起沟通',communication_date='沟通日期',sent='发送简历',sent_date='发送日期',resume_id='实际发送简历 ID',reading='阅读',reply='回复',reply_kind='回复性质',reply_date='首次回复日期',invitation='邀约',invitation_date='首次邀约日期',reading_checked='阅读核对时间',reply_checked='回复核对时间',invitation_checked='邀约核对时间',checked_at='整条核对时间',updated_at='系统更新时间',name='展示名称',kind='资料类型',body='正文',file_id='原件 ID',hidden='日常收起',original_name='原始文件名')

@@ -4,6 +4,7 @@
 
 | 组件 | 版本 | 许可及来源 |
 | --- | --- | --- |
+| Python Windows 嵌入式运行环境 | 3.12.10 x64 | PSF 及随发行版保留的第三方许可；免安装包中 `runtime/LICENSE.txt`，https://www.python.org/downloads/release/python-31210/ |
 | Flask | 3.1.2 | BSD-3-Clause，https://github.com/pallets/flask |
 | Waitress | 3.0.2 | ZPL-2.1，https://github.com/Pylons/waitress |
 | Python-Markdown | 3.9 | BSD-3-Clause，https://github.com/Python-Markdown/markdown |

@@ -44,6 +44,9 @@ def create_app(data_dir=None):
         if not store.lock.acquire(timeout=30):
             return '有操作正在进行，请稍后重试', 503
         g.locked = True
+        # A request may have waited on the lock while shutdown/restore began.
+        if store.maintenance:
+            return '正在关闭或恢复，请稍候', 503
         g.db = db.Database(store.path)
         if 'csrf' not in session:
             session['csrf'] = secrets.token_hex(24)

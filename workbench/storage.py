@@ -9,6 +9,7 @@ import threading
 import uuid
 import zipfile
 import warnings
+import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
@@ -29,6 +30,18 @@ def digest(path):
     return h.hexdigest()
 
 
+def replace_generation(source, target):
+    """Windows may briefly lock a freshly validated directory; never remove it."""
+    deadline=time.monotonic()+2
+    while True:
+        try:
+            return os.replace(source,target)
+        except PermissionError as exc:
+            if os.name!='nt' or getattr(exc,'winerror',None) not in (5,32,33) or time.monotonic()>=deadline:
+                raise
+            time.sleep(.05)
+
+
 class Store:
     def __init__(self, root):
         self.root = Path(root).resolve()
@@ -47,8 +60,8 @@ class Store:
                 raise ValueError('恢复切换日志无效，请保留数据并检查')
             if previous.exists():
                 if self.current.exists():
-                    os.replace(self.current, self.root / ('interrupted-' + uuid.uuid4().hex))
-                os.replace(previous, self.current)
+                    replace_generation(self.current, self.root / ('interrupted-' + uuid.uuid4().hex))
+                replace_generation(previous, self.current)
             marker.unlink()
         for p in [self.current / 'files', self.backups, self.staging]:
             p.mkdir(parents=True, exist_ok=True)
@@ -320,9 +333,9 @@ class Store:
                 os.fsync(f.fileno())
             try:
                 # Callers close every request connection before this generation switch.
-                os.replace(self.current, old)
+                replace_generation(self.current, old)
                 moved = True
-                os.replace(folder, self.current)
+                replace_generation(folder, self.current)
                 c = db.Database(self.path)
                 try:
                     c.execute("UPDATE db_meta SET value=? WHERE key='workspace_id'", (self.workspace_id,))
@@ -340,8 +353,8 @@ class Store:
                 if moved:
                     if self.current.exists():
                         failed = self.staging / ('failed-' + uuid.uuid4().hex)
-                        os.replace(self.current, failed)
-                    os.replace(old, self.current)
+                        replace_generation(self.current, failed)
+                    replace_generation(old, self.current)
                 raise
             finally:
                 self.maintenance = False

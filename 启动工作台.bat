@@ -3,6 +3,11 @@ chcp 65001 >nul
 set PYTHONUTF8=1
 set PYTHONIOENCODING=utf-8
 cd /d "%~dp0"
+if exist "runtime\python.exe" (
+  "runtime\python.exe" -X utf8 portable.py start %*
+  if errorlevel 1 pause
+  exit /b
+)
 if not exist ".venv\Scripts\python.exe" (
   echo 未找到独立环境，请按照使用说明安装依赖。
   pause

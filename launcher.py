@@ -35,10 +35,49 @@ class DailyLog(logging.Handler):
 
 def health(port):
     try:
-        with urllib.request.urlopen(f'http://127.0.0.1:{port}/healthz', timeout=1) as r:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(f'http://127.0.0.1:{port}/healthz', timeout=1) as r:
             return json.load(r)
     except Exception:
         return {}
+
+
+def service_paths(data_dir):
+    data_dir = Path(data_dir).resolve()
+    return data_dir.parent / ('run' if data_dir == ROOT / 'data' else data_dir.name + '-run')
+
+
+def stop_requested(path, identity):
+    try:
+        request = json.loads(path.read_text('utf-8'))
+        return all(request.get(key) == identity[key] for key in ('pid', 'started_at', 'workspace_id'))
+    except (OSError, ValueError, KeyError):
+        return False
+
+
+def serve_until_stopped(server, store, run, identity):
+    """Process-local control file: no public shutdown endpoint or PID killing."""
+    request_path = run / 'stop-request.json'
+    try:
+        while True:
+            if stop_requested(request_path, identity):
+                # Wait for the active coordinated save/backup to finish first.
+                if store.lock.acquire(blocking=False):
+                    try:
+                        store.maintenance = True
+                    finally:
+                        store.lock.release()
+                    break
+            server.asyncore.loop(timeout=.25, count=1, map=server._map)
+    except KeyboardInterrupt:
+        # Keep the original console exit behavior; normal portable stop uses above.
+        pass
+    finally:
+        server.close()
+        server.task_dispatcher.shutdown(timeout=35)
+        server.asyncore.close_all(map=server._map)
+        if stop_requested(request_path, identity):
+            request_path.unlink(missing_ok=True)
 
 
 def main():
@@ -46,7 +85,7 @@ def main():
     args.add_argument('--no-browser', action='store_true')
     args.add_argument('--data-dir', type=Path, default=ROOT / 'data')
     opt = args.parse_args()
-    run = opt.data_dir.resolve().parent / ('run' if opt.data_dir.resolve() == ROOT / 'data' else opt.data_dir.name + '-run')
+    run = service_paths(opt.data_dir)
     logs = ROOT / 'logs'
     run.mkdir(parents=True, exist_ok=True)
     logs.mkdir(exist_ok=True)
@@ -104,7 +143,8 @@ def main():
     if server is None:
         raise RuntimeError('连续 100 个端口不可用')
     (run / 'port.txt').write_text(str(port))
-    ownership=json.dumps(dict(pid=os.getpid(), started_at=app.config['STARTED_AT']))
+    identity = dict(pid=os.getpid(), started_at=app.config['STARTED_AT'], workspace_id=store.workspace_id)
+    ownership=json.dumps(identity)
     (run / 'service.json').write_text(ownership)
     lock_file.seek(1)
     lock_file.write(ownership.encode('utf-8'))
@@ -114,7 +154,7 @@ def main():
         import threading
         threading.Timer(.7, lambda: webbrowser.open(f'http://127.0.0.1:{port}')).start()
     try:
-        server.run()
+        serve_until_stopped(server, store, run, identity)
     finally:
         server.close()
         lock_file.close()

@@ -7,10 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORIES = ('workbench', 'tests')
-FILES = ('README.md', '.gitignore', '.gitattributes', 'launcher.py', '启动工作台.bat',
+FILES = ('README.md', '.gitignore', '.gitattributes', 'launcher.py', 'portable.py', '启动工作台.bat',
+         '关闭工作台.bat', '创建桌面快捷方式.bat', 'requirements-runtime-lock.txt', 'pytest.ini',
          'requirements.txt', 'requirements-dev.txt', 'requirements-lock.txt',
          'docs/AI_UPDATE.md', 'docs/THIRD_PARTY_NOTICES.md',
-         'docs/images/job-detail.png', 'scripts/export_public.py')
+         'docs/images/job-detail.png', 'docs/PORTABLE.md', 'docs/RELEASE-v1.1.3.md', 'scripts/build_portable.py', 'scripts/export_public.py')
 
 
 def export(destination):
