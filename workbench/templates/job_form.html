@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import tokens,input,textarea,select,choice,flag,platform_label with context %}
+{% from 'note_attachments.html' import editor with context %}
+{% block body %}
+<h1>{{ '编辑岗位' if item.get('id') else '快速收录' }}</h1>
+<p>公司与岗位名称即可保存，其他内容可以稍后补充。</p>
+<form method="post" enctype="multipart/form-data" class="card dirty-form">
+  {{ tokens(item) }}<input type="hidden" name="row_version" value="{{ item.get('row_version',1) }}"><input type="hidden" name="back" value="{{ back }}">
+  {% if duplicates %}<div class="notice"><strong>发现可能重复的岗位（含归档）</strong>{% for d in duplicates %}<p><a target="_blank" href="/jobs/{{ d.id }}">{{ d.company }} / {{ d.title }}{{ '（已归档）' if d.archived }}</a></p>{% endfor %}<label><input type="checkbox" name="continue" value="1"> 这是独立机会，继续新建</label><p>若刚才选择过附件，请重新选择后继续保存。</p></div>{% endif %}
+  <div class="grid">{{ input('company','公司名称 *',item,required=true) }}{{ input('title','岗位名称 *',item,required=true) }}</div>
+  <details {% if item.get('id') or error %}open{% endif %}>
+    <summary>更多信息 · JD、来源、薪资、标签与通勤</summary>
+    <div class="grid">
+      <label>公司规模<input name="company_size" value="{{ item.get('company_size','') }}" placeholder="例如 20–99人、100–499人、1000人以上"></label>
+      {{ choice('source','来源平台',platforms_choices,item) }}{{ input('url','来源链接',item) }}
+      <label>薪资范围<input name="salary" value="{{ item.get('salary','') }}" placeholder="例如 8–12K/月、15–20万/年、面议"></label>
+      {{ choice('region','区域',regions,item) }}{{ input('address','办公地点',item) }}
+      {{ select('direct','公共交通直达',['未知','是','否'],item) }}{{ input('commute','单程通勤分钟',item,'number') }}{{ input('commute_note','通勤说明',item) }}
+      {{ input('tags','标签（逗号分隔）',item) }}{{ select('stage','整体阶段',stages,item) }}{{ select('end_reason','结束原因',['','被拒','主动放弃','岗位关闭','其他'],item) }}
+    </div>
+    {{ textarea('jd','JD 原文',item,10) }}{{ textarea('note','备注',item) }}
+    {{ editor(note_attachments|default([])) }}
+    <label><input type="checkbox" name="star" value="1" {{ 'checked' if item.get('star') in [1,'1'] }}> 星标岗位</label>
+  </details>
+  <div class="actions sticky"><button class="primary">保存岗位</button><a class="button" href="{{ back }}">返回原位置</a></div>
+</form>
+{% if item.get('id') %}
+<section class="card"><h2>平台记录与补记</h2><p>先保存上方修改，再进入对应平台补记。</p><div class="actions">{% for p in platforms %}<a class="button" href="/platforms/{{ p.id }}/edit?back={{ current_url|urlencode }}">{{ platform_label(p) }} → 集中补记</a>{% endfor %}<a class="button" href="/jobs/{{ item.id }}/platforms/new?back={{ current_url|urlencode }}">＋平台记录</a></div></section>
+<section class="card"><h2>关联资料与岗位操作</h2><div class="actions"><a class="button" href="/resumes/new?job_id={{ item.id }}">导入并关联简历</a><a class="button" href="/resumes">复用已有简历</a><a class="button" href="/materials/new?job_id={{ item.id }}">保存资料或写复盘</a>{{ flag(item,'star','取消星标' if item.star else '加星',current_url) }}{{ flag(item,'archived','恢复归档' if item.archived else '归档',current_url) }}</div></section>
+{% endif %}
+{% endblock %}

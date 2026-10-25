@@ -1,0 +1,12 @@
+{% macro history_entry(entry) %}
+<details class="history-entry">
+  <summary><time>{{ entry.created_at|localtime }}</time><span>{{ entry.title }}</span></summary>
+  <div class="history-changes">
+    <small>{{ entry.entity }}记录{% if entry.entity!='岗位' %} #{{ entry.entity_id }}{% endif %}</small>
+    {% for change in entry.changes %}
+    <div class="history-change"><strong>{{ field_labels.get(change.field,change.field) }}</strong><pre>修改前：{{ change.old_value|history_value(change.field) }}
+修改后：{{ change.new_value|history_value(change.field) }}</pre></div>
+    {% endfor %}
+  </div>
+</details>
+{% endmacro %}

@@ -1,0 +1,17 @@
+data/
+run/
+logs/
+.venv/
+__pycache__/
+*.local.toml
+.pytest_cache/
+test-output/
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite
+*.db
+*.log
+/dist/
+/build/

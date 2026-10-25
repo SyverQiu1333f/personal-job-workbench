@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}个人求职工作台{% endblock %}</title>
+  {% include 'icons.html' %}
+  <link rel="stylesheet" href="/static/app.css?v={{ app_version }}&amp;brand=gpt-a">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/app.js?v={{ app_version }}" defer></script>
+  <script src="/static/note-attachments.js?v={{ app_version }}" defer></script>
+</head>
+<body>
+{% set active = 'jobs' if request.path.startswith(('/jobs', '/platforms', '/tags')) else 'resumes' if request.path.startswith('/resumes') else 'materials' if request.path.startswith('/materials') else 'analysis' if request.path.startswith('/analysis') else 'backup' if request.path.startswith(('/backup', '/export')) else 'home' %}
+{% set sections = [('home','/','总览'),('jobs','/jobs','岗位管理'),('resumes','/resumes','最终简历'),('materials','/materials','面试资料'),('analysis','/analysis','统计分析'),('backup','/backup','导出与备份')] %}
+<aside>
+  <a class="brand" href="/"><img class="brand-icon" src="/static/workbench-gpt-a.png" alt="" width="24" height="24">求职工作台<span>机会、进展与资料</span></a>
+  <nav aria-label="工作台导航">
+    {% for key,url,label in sections %}<a href="{{ url }}"{% if active==key %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+  </nav>
+  <small>本机 · 离线可用<br>v{{ app_version }}</small>
+</aside>
+<main id="main" hx-history-elt>
+  <header>
+    <div class="header-leading">
+      {% set parent_url,parent_label = navigation_parent(request.endpoint, request.view_args, request.values.get('back',''), job.id if job is defined else none, preview is defined and preview) %}
+      <a class="button module-back" href="{{ parent_url or '#' }}" data-module-parent aria-label="{{ parent_label or '返回上一级' }}" title="{{ parent_label or '返回上一级' }}" {% if not parent_url %}hidden{% endif %}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18"/></svg><span data-parent-label>{{ parent_label }}</span></a>
+      <div class="breadcrumb" role="navigation" aria-label="面包屑">{% for label,url in breadcrumb_trail(request.endpoint, item|default({}), title|default('')) %}{% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}{% if url %}<a href="{{ url }}">{{ label }}</a>{% else %}<strong aria-current="page">{{ label }}</strong>{% endif %}{% endfor %}</div>
+    </div>
+    <div class="header-actions">
+      {% if search_enabled %}<button class="icon-button{{ ' has-filters' if filter_summary }}" type="button" data-search-open aria-label="搜索与筛选{{ '（已应用筛选）' if filter_summary }}" title="搜索与筛选" aria-controls="search-dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>{% endif %}
+      <a class="button{{ ' primary' if request.endpoint in ['index','jobs'] else '' }}" href="/jobs/new?back={{ current_url|urlencode }}">＋ 收录岗位</a>
+    </div>
+  </header>
+  {% if request.args.get('saved') %}<div role="status" class="notice">{{ request.args.saved }}</div>{% endif %}
+  {% if error %}<div role="alert" class="error">保存失败：{{ error }}<br>输入保留在下方，修正后可重试。文件选择需重新确认。</div>{% endif %}
+  {% if filter_summary %}<p class="filter-summary">当前范围：{{ filter_summary|join(' · ') }}</p>{% endif %}
+  {% block body %}{% endblock %}
+  <footer>资料保存在当前电脑 · 所有阶段与进展由你手动记录</footer>
+</main>
+</body>
+</html>

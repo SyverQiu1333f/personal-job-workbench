@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block body %}<h1>操作未完成</h1><form action="{{ action }}" method="post">{% for k,v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}<button>重试本次操作</button> <a href="{{ back }}">返回并核对最新资料</a></form>{% endblock %}

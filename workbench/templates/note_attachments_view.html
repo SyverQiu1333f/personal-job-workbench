@@ -1,0 +1,9 @@
+{% set visible_attachments=note_attachments|rejectattr('hidden')|list %}
+{% set attachment_query=attachment_query|default('job_attachment_id') %}
+{% if visible_attachments %}<section class="note-originals"><h3>{{ attachment_title|default('备注附件') }}</h3>
+<div class="note-images">{% for a in visible_attachments if a.ext in ['png','jpg','jpeg','webp'] %}<figure>
+<a href="/file/{{ a.file_id }}?{{ attachment_query }}={{ a.id }}" target="_blank" rel="noopener noreferrer" title="放大查看 {{ a.original_name }}"><img src="/file/{{ a.file_id }}?{{ attachment_query }}={{ a.id }}" loading="lazy" alt="{{ a.original_name }}"></a>
+<figcaption>{{ a.original_name }}</figcaption><div class="actions"><a href="/file/{{ a.file_id }}?{{ attachment_query }}={{ a.id }}" target="_blank" rel="noopener noreferrer">放大查看</a><a href="/file/{{ a.file_id }}?{{ attachment_query }}={{ a.id }}&amp;download=1">下载原件</a></div>
+</figure>{% endfor %}</div>
+{% for a in visible_attachments if a.ext=='pdf' %}<details class="note-pdf"><summary>{{ a.original_name }} · 预览 PDF</summary><p><a href="/file/{{ a.file_id }}?{{ attachment_query }}={{ a.id }}&amp;download=1">下载原件</a></p><iframe loading="lazy" src="/preview/{{ a.file_id }}" title="附件 PDF 预览：{{ a.original_name }}"></iframe></details>{% endfor %}
+</section>{% endif %}

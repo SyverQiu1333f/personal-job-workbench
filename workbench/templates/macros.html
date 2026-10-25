@@ -1,0 +1,17 @@
+{% macro tokens(item={}) %}<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="data_epoch" value="{{ item.get('data_epoch') or data_epoch }}"><input type="hidden" name="request_id" value="{{ item.get('request_id') or new_id() }}">{% endmacro %}
+{% macro input(name,label,item={},type='text',required=false) %}<label>{{ label }}<input type="{{ type }}" name="{{ name }}" value="{{ item.get(name,'') if item.get(name) is not none else '' }}" {% if required %}required{% endif %} {% if type=='number' %}min="0" step="1"{% endif %}></label>{% endmacro %}
+{% macro textarea(name,label,item={},rows=5) %}<label>{{ label }}<textarea name="{{ name }}" rows="{{ rows }}">{{ item.get(name,'') or '' }}</textarea></label>{% endmacro %}
+{% macro select(name,label,options,item={}) %}<label>{{ label }}<select name="{{ name }}">{% for value in options %}<option value="{{ value }}" {% if item.get(name,'')==value %}selected{% endif %}>{{ value or '不限／未填写' }}</option>{% endfor %}</select></label>{% endmacro %}
+{% macro flag(item,field,label,back) %}<form class="inline" method="post" action="/jobs/{{ item.id }}/flag">{{ tokens() }}<input type="hidden" name="row_version" value="{{ item.row_version }}"><input type="hidden" name="back" value="{{ back }}"><input type="hidden" name="field" value="{{ field }}"><input type="hidden" name="value" value="{{ 0 if item[field] else 1 }}"><button class="quiet">{{ label }}</button></form>{% endmacro %}
+{% macro platform_label(p) %}{{ p.platform or '平台待补' }} · #{{ p.id }} · {% if not p.communicated and not p.sent and p.reading=='未知' and p.reply=='待核对' and p.invitation=='待核对' and not p.resume_id and not p.communication_date and not p.sent_date and not p.reply_date and not p.invitation_date and not p.reading_checked and not p.reply_checked and not p.invitation_checked and not p.checked_at and not p.note and not p.reply_kind %}进展待补{% else %}{{ '已发送' if p.sent else ('已沟通' if p.communicated else '未记录触达') }} · 阅读：{{ p.reading }} · {{ p.reply }} · {{ p.invitation }}{{ ' · 有备注' if p.note }}{% endif %}{% endmacro %}
+
+{% macro choice(name,label,options,item={}) %}
+<label>{{ label }}<select name="{{ name }}"><option value="">暂不选择</option>{% if item.get(name) and item[name] not in options %}<option value="{{ item[name] }}" selected>{{ item[name] }}（原有值）</option>{% endif %}{% for option in options %}<option value="{{ option }}" {{ 'selected' if item.get(name)==option }}>{{ option }}</option>{% endfor %}</select></label>
+{% endmacro %}
+
+{% macro search_panel() %}
+<dialog id="search-dialog" class="search-dialog" aria-labelledby="search-dialog-title">
+  <div class="heading"><h2 id="search-dialog-title">搜索与筛选</h2><button type="button" data-search-close aria-label="关闭搜索">关闭</button></div>
+  {{ caller() }}
+</dialog>
+{% endmacro %}

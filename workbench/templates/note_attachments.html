@@ -1,0 +1,12 @@
+{% macro editor(attachments=[], title='岗位备注附件', hint='PDF、PNG、JPG/JPEG、WebP，单个不超过 50MB。各平台共用，保存后在岗位详情中查看。') %}
+<fieldset class="note-upload" data-note-upload>
+  <legend>{{ title }}</legend>
+  <p class="muted">{{ hint }}</p>
+  <label>选择附件（可多选）<input type="file" name="note_files" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" data-note-files></label>
+  <div class="note-paste" tabindex="0" role="group" aria-label="截图粘贴区" data-note-paste>点击这里，再按 Ctrl+V 粘贴微信截图</div>
+  <p data-note-status role="status" aria-live="polite">尚未选择新附件</p>
+  <ul data-note-pending></ul>
+  {% for a in attachments if not a.hidden %}<label class="attachment-choice"><span>{{ a.original_name }}</span><span><input type="checkbox" name="hide_attachments" value="{{ a.id }}" {{ 'checked' if a.id|string in request.form.getlist('hide_attachments') }}> 收起（保留原件）</span></label>{% endfor %}
+  {% if attachments|selectattr('hidden')|list %}<details><summary>已收起的附件</summary>{% for a in attachments if a.hidden %}<label class="attachment-choice"><span>{{ a.original_name }}</span><span><input type="checkbox" name="restore_attachments" value="{{ a.id }}" {{ 'checked' if a.id|string in request.form.getlist('restore_attachments') }}> 恢复显示</span></label>{% endfor %}</details>{% endif %}
+</fieldset>
+{% endmacro %}

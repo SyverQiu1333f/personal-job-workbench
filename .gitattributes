@@ -1,0 +1,9 @@
+*.bat text eol=crlf
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.pdf binary
+*.bcmap binary
+*.ttf binary
+*.pfb binary
+workbench/static/pdfjs/** -whitespace

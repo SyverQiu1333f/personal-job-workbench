@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import flag,platform_label,search_panel with context %}
+{% block body %}
+<div class="heading">
+  <div><h1>岗位管理 <span>{{ total }}</span></h1><p>先收录，再补充。每一条进展都有据可查。</p></div>
+  <a href="/tags">管理标签</a>
+</div>
+<div class="tabs">
+  {% for key,label in [('','全部在跟进'),('star','星标'),('recent','最近投递 · 7 天'),('reply','已有回复'),('invitation','已有邀约'),('interview','面试中'),('archived','已归档')] %}
+  <a class="{{ 'active' if filters.get('view','')==key }}" href="/jobs?view={{ key }}"{% if filters.get('view','')==key %} aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+{% call search_panel() %}
+<form class="filters search-bar" action="/jobs" method="get" aria-label="岗位搜索">
+  <input type="hidden" name="apply_filters" value="1"><input type="hidden" name="view" value="{{ filters.get('view','') }}">
+  {% for key in ['archived','fact'] %}{% if filters.get(key) %}<input type="hidden" name="{{ key }}" value="{{ filters[key] }}">{% endif %}{% endfor %}
+  <input type="hidden" name="tag_mode" value="{{ 'all' if filters.get('tag_mode')=='all' else 'any' }}">
+  <label>关键词<input name="q" value="{{ filters.get('q','') }}" placeholder="搜索公司或岗位名称" type="search"></label>
+  <div><div class="search-label-row"><label for="job-tags">标签</label><button type="button" class="tag-match" data-tag-match aria-label="切换标签匹配方式" aria-pressed="{{ 'true' if filters.get('tag_mode')=='all' else 'false' }}">{{ '全部匹配' if filters.get('tag_mode')=='all' else '任意匹配' }}</button></div><input id="job-tags" name="tags" value="{{ filters.get('tags','') }}" placeholder="多个标签用逗号分隔"></div>
+  <label>状态<select name="stage"><option value="">全部状态</option>{% for stage in stages %}<option value="{{ stage }}" {% if ('面试中' if filters.get('view')=='interview' else filters.get('stage',''))==stage %}selected{% endif %}>{{ stage }}</option>{% endfor %}</select></label>
+  <div class="actions"><button>筛选</button><a class="button" href="{{ reset_url }}">重置筛选</a></div>
+</form>
+{% endcall %}
+<div class="list-toolbar"><small>星标优先 · 当前第 {{ page }} 页 · 每页 50 条</small></div>
+<section id="edit-panel" aria-live="polite"></section>
+<section class="list" aria-label="岗位清单">
+  {% if rows %}<div class="list-heading" aria-hidden="true"><span>公司 / 岗位与基本信息</span><span>整体阶段</span><span>岗位操作</span></div>{% endif %}
+  {% for item in rows %}
+  {% set position=back+'#job-'+item.id|string %}
+  <article id="job-{{ item.id }}" class="job-row record-card">
+    <div class="job-main">
+      <div class="job-name">{{ flag(item,'star','★' if item.star else '☆',position) }}<a class="job-title job-headline remember record-link" href="/jobs/{{ item.id }}?back={{ position|urlencode }}"><span class="job-company">{{ item.company }}</span><span class="job-role">{{ item.title }}</span></a></div>
+      <p class="job-meta">{{ item.region or '区域待补' }} · {{ item|salary_range or '薪资待补' }}{% if item.company_size %} · {{ item.company_size }}{% endif %} · {{ (item.commute|string+' 分钟') if item.commute is not none else '通勤待补' }}</p>
+      <small>{{ item.tags or '暂无标签' }} · 收录 {{ item.created_at|localtime }}</small>
+    </div>
+    <div class="job-state"><span class="pill">{{ item.stage }}</span>{% if item.archived %}<span class="pill">已归档</span>{% endif %}</div>
+    <div class="row-actions">
+      <a class="button" href="/jobs/{{ item.id }}?back={{ position|urlencode }}">查看详情</a>
+      <a class="button" href="/jobs/{{ item.id }}/platforms/new?back={{ position|urlencode }}">＋平台记录</a>
+      {{ flag(item,'archived','恢复' if item.archived else '归档',back) }}
+    </div>
+    <div class="platform-strip">
+      {% for p in platform_map[item.id] %}
+      <a class="button" href="/platforms/{{ p.id }}/edit?back={{ position|urlencode }}" hx-get="/platforms/{{ p.id }}/edit?back={{ position|urlencode }}" hx-target="#edit-panel" hx-swap="innerHTML" hx-push-url="false">{{ platform_label(p) }} → 集中补记</a>
+      {% endfor %}
+    </div>
+  </article>
+  {% else %}
+  <div class="empty"><h2>这里还没有符合条件的岗位</h2><p>可以清空筛选，或用公司与岗位名称快速收录。</p></div>
+  {% endfor %}
+</section>
+<div class="actions">
+  {% if page>1 %}<a class="button" href="{{ page_url(page-1) }}">上一页</a>{% endif %}
+  {% if page*50<total %}<a class="button" href="{{ page_url(page+1) }}">下一页</a>{% endif %}
+  <a class="button" href="/export?{{ back.split('?')[1] }}">导出当前筛选</a>
+</div>
+{% endblock %}

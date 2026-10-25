@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import input,select,search_panel with context %}
+{% block body %}
+<div class="heading"><div><h1>面试资料</h1><p>岗位下的同一批材料，集中查找。点击条目查看详情。</p></div><a class="button primary" href="/materials/new">＋ 保存资料</a></div>
+{% call search_panel() %}
+<form class="filters search-bar search-bar--two" method="get">
+{{ input('q','资料名称／关联公司／岗位',dict(q=q)) }}{{ select('kind','类型',['']+kinds,dict(kind=kind)) }}
+<div class="actions filter-actions"><button>筛选</button><a class="button" href="{{ reset_url }}">重置筛选</a></div>
+</form>
+{% endcall %}
+<section class="list">{% for m in rows %}
+<article id="material-{{ m.id }}" class="card record-card">
+<span class="pill">{{ m.kind }}</span><h2><a class="record-link remember" href="/materials/{{ m.id }}?back={{ (current_url+'#material-'+m.id|string)|urlencode }}">{{ m.title }}</a></h2>
+<p>{{ '正文及原件均有' if m.body and (m.file_id or m.has_attachments) else '含文本正文' if m.body else '仅原件' }} · {{ m.original_name or ('图片／补充附件' if m.has_attachments else '自由文本') }} · {{ m.updated_at|localtime }}</p>
+</article>
+{% else %}<div class="empty">暂无符合条件的资料。可导入背调、模拟面试，或直接写自由复盘。</div>{% endfor %}</section>
+{% include 'pagination.html' %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import tokens,input,textarea,select with context %}
+{% from 'note_attachments.html' import editor with context %}
+{% block body %}
+<h1>{{ '编辑资料' if item.get('id') else '保存资料' }}</h1>
+<p>背调、模拟面试与真实面试复盘可写文字、传文档或补充图片，不要求固定提纲。</p>
+<form method="post" enctype="multipart/form-data" class="card dirty-form">
+{{ tokens(item) }}<input type="hidden" name="back" value="{{ back }}"><input type="hidden" name="row_version" value="{{ item.get('row_version',1) }}">
+<div class="grid">{{ input('title','资料标题 *',item,required=true) }}{{ select('kind','资料类型',kinds,item) }}{{ input('source','资料来源（外部工具／手写等）',item) }}</div>
+{{ textarea('body','正文／自由复盘（支持 Markdown）',item,14) }}
+<p class="muted">正文中的远程图片语法仅保留原文，不在页面显示，也不会自动下载。需要展示的图片请通过下方附件选择或粘贴。</p>
+{{ editor(material_attachments, '图片／补充附件', '支持 PNG、JPG/JPEG、WebP、PDF，可多选，也可粘贴微信截图。单个不超过 50MB，保存后在资料详情中预览。共享资料的图片随资料一起关联多个岗位。') }}
+<label>{{ '替换当前文档附件（不选择则保留）' if item.get('file_id') else '可选文档附件' }} · Markdown、PDF、Word，每个不超过 50MB<input type="file" name="file" accept=".md,.markdown,.pdf,.doc,.docx"></label>
+<label><input type="checkbox" name="import_body" value="1" {{ 'checked' if (not item.get('id') and not request.method=='POST') or item.get('import_body')=='1' }}> 将新上传的 Markdown 原文填入正文（勾选后会替换上方正文；PDF／Word 不提取）</label>
+<h2>关联岗位</h2><p>至少一个；跨岗位分析可关联多个，共享这一份材料。</p>
+<div class="choice-list">{% for j in jobs %}<label><input type="checkbox" name="jobs" value="{{ j.id }}" {{ 'checked' if j.id in linked }}>{{ j.company }} / {{ j.title }} #{{ j.id }}{{ '（已归档）' if j.archived }}</label>{% endfor %}</div>
+<div class="actions"><button class="primary">保存资料</button><a href="{{ back }}">返回原位置</a></div>
+</form>
+{% endblock %}

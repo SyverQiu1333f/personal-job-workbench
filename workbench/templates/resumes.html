@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import input,search_panel with context %}
+{% block body %}
+<div class="heading"><div><h1>最终简历</h1><p>准备关联与实际发送分别保存。点击条目查看详情。</p></div><a class="button primary" href="/resumes/new">＋ 导入最终 PDF</a></div>
+{% call search_panel() %}
+<form class="filters search-bar" method="get">
+{{ input('q','名称／关联公司／岗位',dict(q=q)) }}{{ input('tag','关联岗位标签',dict(tag=tag)) }}
+<label>显示范围<select name="hidden"><option value="">日常显示</option><option value="all" {{ 'selected' if request.args.get('hidden')=='all' }}>包含收起的简历</option></select></label>
+<div class="actions filter-actions"><button>筛选</button><a class="button" href="{{ reset_url }}">重置筛选</a></div>
+</form><p class="search-hint">标签来自准备关联或实际发送所关联的岗位。</p>
+{% endcall %}
+<section class="list">{% for r in rows %}
+<article id="resume-{{ r.id }}" class="card record-card">
+<a class="job-title record-link remember" href="/resumes/{{ r.id }}?back={{ (current_url+'#resume-'+r.id|string)|urlencode }}">{{ r.name }}</a><span class="pill">PDF #{{ r.id }}</span>
+<p>{{ r.original_name }} · {{ r.hash[:12] }}{{ ' · 已收起' if r.hidden }}</p>
+<a href="/file/{{ r.file_id }}?download=1&resume_id={{ r.id }}">下载原件</a>
+</article>
+{% else %}<div class="empty">暂无符合条件的最终 PDF</div>{% endfor %}</section>
+{% include 'pagination.html' %}
+{% endblock %}

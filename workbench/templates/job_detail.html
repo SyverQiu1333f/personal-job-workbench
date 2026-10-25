@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import platform_label with context %}
+{% block body %}
+<a href="{{ back }}" class="back">← 返回原列表</a>
+<div class="heading"><div><p class="eyebrow">{{ item.company }}</p><h1>{{ item.title }}</h1><p>{{ item.stage }} · {{ item.region or '区域待补' }} · {{ item|salary_range or '薪资待补' }}{{ ' · ★ 星标' if item.star }}{{ ' · 已归档' if item.archived }}</p></div><a class="button primary" href="/jobs/{{ item.id }}/edit?back={{ current_url|urlencode }}">编辑岗位</a></div>
+<div class="actions"><a class="button" href="/export?job_id={{ item.id }}">导出这个岗位</a></div>
+<section class="card"><h2>岗位档案</h2><div class="grid">
+<p>公司规模：{{ item.company_size or '待补' }}</p>
+<p>来源：{{ item.source or '待补' }}{% if item.url.startswith('http://') or item.url.startswith('https://') %} · <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">打开来源</a>{% endif %}</p>
+<p>标签：{% for t in tags %}<span class="pill">{{ t.name }}</span>{% else %}待补{% endfor %}</p>
+<p>办公地点：{{ item.address or '待补' }}</p><p>通勤：{{ (item.commute|string+' 分钟') if item.commute is not none else '待补' }} · 直达 {{ item.direct }} · {{ item.commute_note }}</p>
+</div><h3>JD 原文</h3><pre>{{ item.jd or '尚未补充 JD' }}</pre><h3>备注 / 结束原因</h3><pre>{{ item.note }}
+{{ item.end_reason }}</pre>{% include 'note_attachments_view.html' %}</section>
+<section class="card"><h2>平台沟通与投递</h2><p>沟通、发送、回复和邀约分别记录，整体阶段由本人选择。</p>
+{% for p in platforms %}<section class="platform-facts"><h3>{{ platform_label(p) }}</h3>
+<div class="grid"><p>沟通：{{ '已发起' if p.communicated else '未记录' }} · 实际日期 {{ p.communication_date or '待补' }}</p><p>发送：{{ '已发送' if p.sent else '未记录' }} · 实际日期 {{ p.sent_date or '待补' }}</p><p>回复性质：{{ p.reply_kind or '未填写' }} · 首次回复 {{ p.reply_date or '待补' }}</p><p>首次邀约：{{ p.invitation_date or '待补' }}</p></div>
+{% if p.resume_id %}<p>实际发送文件：<a href="/resumes/{{ p.resume_id }}?back={{ current_url|urlencode }}">最终 PDF #{{ p.resume_id }}</a></p>{% endif %}
+{% if p.url.startswith('http://') or p.url.startswith('https://') %}<p><a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">打开平台来源</a></p>{% endif %}
+<pre>{{ p.note }}</pre><small>整条核对 {{ p.checked_at|localtime }} · 阅读核对 {{ p.reading_checked|localtime }} · 回复核对 {{ p.reply_checked|localtime }} · 邀约核对 {{ p.invitation_checked|localtime }}</small>
+</section>{% endfor %}</section>
+<section class="card"><h2>岗位材料与自由复盘</h2>{% for m in materials %}<p><span class="pill">{{ m.kind }}</span> <a href="/materials/{{ m.id }}?back={{ current_url|urlencode }}">{{ m.title }}</a></p>{% else %}<p>暂无材料</p>{% endfor %}</section>
+<section class="card"><h2>准备关联的最终简历</h2>{% for r in resumes %}<p><a href="/resumes/{{ r.id }}?back={{ current_url|urlencode }}">{{ r.name }} #{{ r.id }}</a></p>{% else %}<p>暂无准备关联；关联不等于发送。</p>{% endfor %}</section>
+{% from 'history.html' import history_entry with context %}
+{% set summaries=history|history_summaries %}
+<section class="card history-card"><div class="heading"><h2>变化记录</h2>{% if summaries|length>5 %}<small>最近 5 条</small>{% endif %}</div>
+{% for entry in summaries[:5] %}{{ history_entry(entry) }}{% else %}<p class="muted">暂无变化记录</p>{% endfor %}
+{% if summaries|length>5 %}<details class="history-older"><summary>查看更早记录</summary>{% for entry in summaries[5:] %}{{ history_entry(entry) }}{% endfor %}</details>{% endif %}
+</section>
+{% endblock %}
